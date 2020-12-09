@@ -160,7 +160,7 @@ def get_params(vocab_size, num_hiddens, device):
 
 ```{.python .input}
 #@tab tensorflow
-def get_params(vocab_size, num_hidden):
+def get_params(vocab_size, num_hiddens):
     num_inputs = num_outputs = vocab_size
     
     def normal(shape):
@@ -657,7 +657,7 @@ def train_epoch_ch8(model, train_iter, loss, updater,   #@save
         with tf.GradientTape(persistent=True) as g:
             g.watch(params)
             y_hat, state= model(X, state, params)
-            y = d2l.reshape(Y, (-1))
+            y = d2l.reshape(tf.transpose(Y), (-1))
             l = loss(y, y_hat)
         grads = g.gradient(l, params)
         grads = grad_clipping(grads, 1)
@@ -808,7 +808,6 @@ and make it run faster.
 1. Show that one-hot encoding is equivalent to picking a different embedding for each object.
 1. Adjust the hyperparameters (e.g., number of epochs, number of hidden units, number of time steps in a minibatch, and learning rate) to improve the perplexity.
     * How low can you go?
-    * Replace random sampling with sequential partitioning. Does this lead to better performance?
     * Replace one-hot encoding with learnable embeddings. Does this lead to better performance?
     * How well will it work on other books by H. G. Wells, e.g., [*The War of the Worlds*](http://www.gutenberg.org/ebooks/36)?
 1. Modify the prediction function such as to use sampling rather than picking the most likely next character.

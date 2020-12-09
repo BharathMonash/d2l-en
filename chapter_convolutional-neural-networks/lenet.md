@@ -133,7 +133,6 @@ net = torch.nn.Sequential(
 #@tab tensorflow
 from d2l import tensorflow as d2l
 import tensorflow as tf
-from tensorflow.distribute import MirroredStrategy, OneDeviceStrategy
 
 def net():
     return tf.keras.models.Sequential([
@@ -257,7 +256,12 @@ def evaluate_accuracy_gpu(net, data_iter, device=None): #@save
     # No. of correct predictions, no. of predictions
     metric = d2l.Accumulator(2)
     for X, y in data_iter:
-        X, y = X.to(device), y.to(device)
+        if isinstance(X, list):
+            # Required for BERT Fine-tuning (to be covered later)
+            X = [x.to(device) for x in X]
+        else:
+            X = X.to(device)
+        y = y.to(device)
         metric.add(d2l.accuracy(net(X), y), d2l.size(y))
     return metric[0] / metric[1]
 ```
@@ -340,9 +344,9 @@ def train_ch6(net, train_iter, test_iter, num_epochs, lr,
     for epoch in range(num_epochs):
         # Sum of training loss, sum of training accuracy, no. of examples
         metric = d2l.Accumulator(3)
+        net.train()
         for i, (X, y) in enumerate(train_iter):
             timer.start()
-            net.train()
             optimizer.zero_grad()
             X, y = X.to(device), y.to(device)
             y_hat = net(X)
@@ -352,8 +356,8 @@ def train_ch6(net, train_iter, test_iter, num_epochs, lr,
             with torch.no_grad():
                 metric.add(l * X.shape[0], d2l.accuracy(y_hat, y), X.shape[0])
             timer.stop()
-            train_l = metric[0]/metric[2]
-            train_acc = metric[1]/metric[2]
+            train_l = metric[0] / metric[2]
+            train_acc = metric[1] / metric[2]
             if (i + 1) % (num_batches // 5) == 0 or i == num_batches - 1:
                 animator.add(epoch + (i + 1) / num_batches,
                              (train_l, train_acc, None))
